@@ -1,0 +1,12 @@
+services:
+  proxy:
+    build: ./proxy
+    ports:
+      - "3000:3000"
+    depends_on:
+      - scraper
+
+  scraper:
+    build: ./stream-info-scrapping
+    ports:
+      - "5000:5000"
