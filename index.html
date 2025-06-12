@@ -9,6 +9,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Video Player Overlay -->
+    <div id="video-player" class="hidden fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
+        <div class="relative w-full h-full max-w-6xl max-h-[90vh] mx-auto">
+            <video id="player" controls class="w-full h-full"></video>
+            <button id="close-player" class="absolute top-4 right-4 text-white hover:text-primary p-2">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- HLS.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -92,6 +105,29 @@
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: linear-gradient(to bottom, #2563eb, #7c3aed);
             border-radius: 4px;
+        }
+
+        /* Video Player */
+        #player {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #video-player {
+            transition: all 0.3s ease;
+        }
+
+        #close-player {
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        #close-player:hover {
+            opacity: 1;
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -292,7 +328,7 @@
                             </div>
                             <span class="text-lg font-bold">1</span>
                         </div>
-                        <button class="w-full mt-4 bg-primary hover:bg-blue-700 text-white font-medium py-2 rounded-full transition duration-300">
+                        <button class="w-full mt-4 bg-primary hover:bg-blue-700 text-white font-medium py-2 rounded-full transition duration-300" data-stream-id="manchester-liverpool">
                             Watch Now
                         </button>
                     </div>
@@ -723,6 +759,93 @@
             if (link.href === window.location.href) {
                 link.classList.add('text-primary');
                 link.classList.add('font-semibold');
+            }
+        });
+
+        // Video player functionality
+        const videoPlayer = document.getElementById('video-player');
+        const closePlayerBtn = document.getElementById('close-player');
+        const playerElement = document.getElementById('player');
+        let hls = null;
+
+        // Sample video sources - replace with your actual HLS streams
+        const channels = {
+            'espn': 'https://example.com/streams/espn.m3u8',
+            'fox-sports': 'https://example.com/streams/fox-sports.m3u8',
+            'sky-sports': 'https://example.com/streams/sky-sports.m3u8',
+            'bein-sports': 'https://example.com/streams/bein-sports.m3u8',
+            'tnt-sports': 'https://example.com/streams/tnt-sports.m3u8',
+            'discovery': 'https://example.com/streams/discovery.m3u8'
+        };
+
+        // Sample live streams - replace with your actual HLS streams
+        const liveStreams = {
+            'manchester-liverpool': 'https://example.com/streams/epl1.m3u8',
+            'madrid-barcelona': 'https://example.com/streams/laliga1.m3u8',
+            'lakers-warriors': 'https://example.com/streams/nba1.m3u8',
+            'psg-bayern': 'https://example.com/streams/ucl1.m3u8'
+        };
+
+        // Handle watch now buttons
+        document.querySelectorAll('[onclick^="watch"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const streamId = this.dataset.streamId || this.parentElement.dataset.streamId;
+                playStream(streamId);
+            });
+        });
+
+        // Close player
+        closePlayerBtn.addEventListener('click', () => {
+            if (hls) {
+                hls.destroy();
+            }
+            playerElement.pause();
+            videoPlayer.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        });
+
+        // Play stream function
+        function playStream(streamId) {
+            videoPlayer.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(streams[streamId]);
+                hls.attachMedia(playerElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    playerElement.play();
+                });
+            } else if (playerElement.canPlayType('application/vnd.apple.mpegurl')) {
+                playerElement.src = streams[streamId];
+                playerElement.addEventListener('loadedmetadata', function() {
+                    playerElement.play();
+                });
+            }
+        }
+
+        // Demo functionality - replace with your actual binding
+        document.querySelectorAll('.bg-primary').forEach(btn => {
+            if (btn.textContent.trim().toLowerCase().includes('watch now')) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const card = this.closest('.match-card') || this.closest('.bg-dark');
+                    if (card) {
+                        const channel = card.querySelector('.channel-badge')?.textContent.trim().toLowerCase();
+                        const streamKey = card.querySelector('h3')?.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+                        
+                        const streamId = channel ? channel.replace(' ', '-') : streamKey;
+                        const streamUrl = channel ? channels[channel] : liveStreams[streamKey];
+                        
+                        if (streamUrl) {
+                            playStream(streamUrl);
+                        } else {
+                            // Fallback demo stream
+                            playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+                        }
+                    }
+                });
             }
         });
     </script>
