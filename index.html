@@ -1,853 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium IPTV | Watch Live Sports & Channels</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Video Player Overlay -->
-    <div id="video-player" class="hidden fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
-        <div class="relative w-full h-full max-w-6xl max-h-[90vh] mx-auto">
-            <video id="player" controls class="w-full h-full"></video>
-            <button id="close-player" class="absolute top-4 right-4 text-white hover:text-primary p-2">
-                <i class="fas fa-times text-2xl"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- HLS.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        poppins: ['Poppins', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: '#2563eb',
-                        secondary: '#7c3aed',
-                        dark: '#0f172a',
-                        darker: '#020617',
-                        glass: 'rgba(15, 23, 42, 0.7)',
-                    },
-                    boxShadow: {
-                        'neumorphic': '8px 8px 16px #0a0f1c, -8px -8px 16px #141f38',
-                        'neumorphic-sm': '4px 4px 8px #0a0f1c, -4px -4px 8px #141f38',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to bottom right, #0f172a, #020617);
-            min-height: 100vh;
-            color: #fff;
-        }
-
-        .gradient-text {
-            background: linear-gradient(to right, #2563eb, #7c3aed);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .glass-effect {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .channel-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 4px 8px;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-        }
-
-        .match-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .live-indicator {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* For WebKit browsers */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #2563eb, #7c3aed);
-            border-radius: 4px;
-        }
-
-        /* Video Player */
-        #player {
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        #video-player {
-            transition: all 0.3s ease;
-        }
-
-        #close-player {
-            transition: all 0.3s ease;
-            opacity: 0.7;
-        }
-
-        #close-player:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TV Online</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.2s;
+    }
+    .glass:hover {
+      transform: scale(1.03);
+    }
+  </style>
 </head>
-<body class="text-gray-200">
-    <!-- Navbar -->
-    <header class="glass-effect fixed w-full z-50">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-primary">
-                            <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path>
-                            <line x1="2" y1="20" x2="2" y2="20"></line>
-                        </svg>
-                        <span class="ml-2 text-xl font-bold gradient-text">Premium<span class="font-light">IPTV</span></span>
-                    </div>
-                    <nav class="hidden md:flex space-x-6">
-                        <a href="#" class="hover:text-primary font-medium transition duration-300">Home</a>
-                        <a href="#" class="hover:text-primary font-medium transition duration-300">Sports</a>
-                        <a href="#" class="hover:text-primary font-medium transition duration-300">Movies</a>
-                        <a href="#" class="hover:text-primary font-medium transition duration-300">News</a>
-                        <a href="#" class="hover:text-primary font-medium transition duration-300">Channels</a>
-                    </nav>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="relative hidden md:block">
-                        <input type="text" placeholder="Search channels..." class="bg-darker border border-gray-800 rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-64">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    </div>
-                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button class="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-full transition duration-300 hidden md:block">
-                        Sign In
-                    </button>
-                    <button class="md:hidden p-2 focus:outline-none" id="mobile-menu-button">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Mobile Menu -->
-    <div id="mobile-menu" class="hidden fixed inset-0 z-40 bg-black bg-opacity-90 pt-20">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex flex-col space-y-4">
-                <div class="relative mb-6">
-                    <input type="text" placeholder="Search channels..." class="bg-dark border border-gray-700 rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full">
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                </div>
-                <a href="#" class="text-xl hover:text-primary font-medium transition duration-300">Home</a>
-                <a href="#" class="text-xl hover:text-primary font-medium transition duration-300">Sports</a>
-                <a href="#" class="text-xl hover:text-primary font-medium transition duration-300">Movies</a>
-                <a href="#" class="text-xl hover:text-primary font-medium transition duration-300">News</a>
-                <a href="#" class="text-xl hover:text-primary font-medium transition duration-300">Channels</a>
-                <button class="bg-primary hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-full transition duration-300 mt-4">
-                    Sign In
-                </button>
-            </div>
-        </div>
+<body class="min-h-screen text-white">
+  <div class="p-4 max-w-screen-xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-6">TV Online</h1>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div onclick="playChannel('espnpremium')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-tv text-4xl mb-2"></i>
+        <p class="font-semibold">ESPN Premium</p>
+      </div>
+      <div onclick="playChannel('fox1ar')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-football-ball text-4xl mb-2"></i>
+        <p class="font-semibold">Fox Sports</p>
+      </div>
+      <div onclick="playChannel('espn')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-football-ball text-4xl mb-2"></i>
+        <p class="font-semibold">ESPN1</p>
+      </div>
+      <div onclick="playChannel('winsports')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-football-ball text-4xl mb-2"></i>
+        <p class="font-semibold">Win Sports +</p>
+      </div>
+      <div onclick="playChannel('winplus2')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-football-ball text-4xl mb-2"></i>
+        <p class="font-semibold">Win Sports + (Op2)</p>
+      </div>
+      <div onclick="playChannel('tntsports')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-football-ball text-4xl mb-2"></i>
+        <p class="font-semibold">TNT Sports Argentina</p>
+      </div>
+      <div onclick="playChannel('tycsports')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-football-ball text-4xl mb-2"></i>
+        <p class="font-semibold">TyC Sports Argentina</p>
+      </div>
+      <div onclick="playChannel('goltv')" class="glass p-4 cursor-pointer text-center">
+        <i class="fas fa-football-ball text-4xl mb-2"></i>
+        <p class="font-semibold">GolTV</p>
+      </div>
+      <!-- Agrega más canales aquí -->
     </div>
+  </div>
 
-    <!-- Sidebar for larger screens -->
-    <aside class="hidden lg:block fixed left-0 top-0 h-screen w-64 pt-20 bg-dark border-r border-gray-800 overflow-y-auto custom-scrollbar">
-        <div class="p-4">
-            <h3 class="text-lg font-semibold text-gray-300 mb-4 px-2">Categories</h3>
-            <ul class="space-y-2">
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-futbol text-blue-400"></i>
-                        <span>Football</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-basketball-ball text-orange-400"></i>
-                        <span>Basketball</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-baseball-ball text-red-400"></i>
-                        <span>Baseball</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-hockey-puck text-gray-300"></i>
-                        <span>Hockey</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-film text-purple-400"></i>
-                        <span>Movies</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-newspaper text-yellow-400"></i>
-                        <span>News</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <i class="fas fa-child text-green-400"></i>
-                        <span>Kids</span>
-                    </a>
-                </li>
-            </ul>
+  <!-- Reproductor fullscreen -->
+  <div id="playerContainer" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-50">
+    <video id="videoPlayer" controls autoplay class="w-full h-full max-h-screen"></video>
+    <button onclick="closePlayer()" class="absolute top-4 right-4 text-white text-3xl"><i class="fas fa-times"></i></button>
+  </div>
 
-            <h3 class="text-lg font-semibold text-gray-300 mt-8 mb-4 px-2">Popular Channels</h3>
-            <ul class="space-y-2">
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <img src="https://via.placeholder.com/30" alt="ESPN" class="w-6 h-6 rounded-full">
-                        <span>ESPN</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <img src="https://via.placeholder.com/30" alt="FOX Sports" class="w-6 h-6 rounded-full">
-                        <span>FOX Sports</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <img src="https://via.placeholder.com/30" alt="NBC Sports" class="w-6 h-6 rounded-full">
-                        <span>NBC Sports</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition duration-300">
-                        <img src="https://via.placeholder.com/30" alt="Bein Sports" class="w-6 h-6 rounded-full">
-                        <span>Bein Sports</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </aside>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+  let hls; // variable global para poder controlar el hls instance
 
-    <!-- Main Content -->
-    <main class="lg:ml-64 pt-20 pb-16 min-h-screen">
-        <!-- Hero Section -->
-        <section class="relative h-96 flex items-center justify-center bg-gradient-to-r from-dark to-darker overflow-hidden">
-            <div class="absolute inset-0 z-0 opacity-20">
-                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517649763962-0c623066013b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center"></div>
-            </div>
-            <div class="container mx-auto px-4 z-10 text-center">
-                <h1 class="text-4xl md:text-6xl font-bold mb-6">Stream <span class="gradient-text">Live Sports</span>. Anytime.</h1>
-                <p class="text-xl md:text-2xl opacity-90 max-w-3xl mx-auto mb-8">Unlimited access to hundreds of live channels including premium sports, movies, and news from around the world.</p>
-                <div class="flex justify-center space-x-4">
-                    <button class="bg-primary hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full transition duration-300">
-                        Start Watching
-                    </button>
-                    <button class="border border-primary text-primary hover:bg-primary hover:text-white font-semibold py-3 px-8 rounded-full transition duration-300">
-                        Free Trial
-                    </button>
-                </div>
-            </div>
-        </section>
+  function playChannel(streamName) {
+    const video = document.getElementById('videoPlayer');
+    const container = document.getElementById('playerContainer');
+    const streamUrl = `http://localhost:3000/proxy/${streamName}.m3u8`;
 
-        <!-- Live Matches Section -->
-        <section class="py-12 container mx-auto px-4">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl md:text-3xl font-bold">Live <span class="gradient-text">Right Now</span></h2>
-                <a href="#" class="text-primary hover:text-blue-300 font-medium">View All <i class="fas fa-arrow-right ml-1"></i></a>
-            </div>
+    // Si ya hay instancia previa, destruirla para evitar conflictos
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Match Card 1 -->
-                <div class="bg-dark rounded-xl overflow-hidden shadow-neumorphic hover:shadow-xl transition duration-500 match-card relative">
-                    <div class="channel-badge">ESPN</div>
-                    <img src="https://images.unsplash.com/photo-1551958219-acbc608c9097?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Match" class="w-full h-40 object-cover">
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white mb-1">
-                                    <span class="live-indicator mr-1">●</span> LIVE
-                                </span>
-                                <h3 class="text-lg font-semibold line-clamp-1">Manchester United vs Liverpool FC</h3>
-                            </div>
-                            <span class="text-sm text-gray-400">68'</span>
-                        </div>
-                        <p class="text-sm text-gray-400 mb-4">English Premier League</p>
-                        <div class="flex justify-between items-center mb-3">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 1" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Man Utd</span>
-                            </div>
-                            <span class="text-lg font-bold">2</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 2" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Liverpool</span>
-                            </div>
-                            <span class="text-lg font-bold">1</span>
-                        </div>
-                        <button class="w-full mt-4 bg-primary hover:bg-blue-700 text-white font-medium py-2 rounded-full transition duration-300" data-stream-id="manchester-liverpool">
-                            Watch Now
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Match Card 2 -->
-                <div class="bg-dark rounded-xl overflow-hidden shadow-neumorphic hover:shadow-xl transition duration-500 match-card relative">
-                    <div class="channel-badge">FOX Sports</div>
-                    <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1293&q=80" alt="Match" class="w-full h-40 object-cover">
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white mb-1">
-                                    <span class="live-indicator mr-1">●</span> LIVE
-                                </span>
-                                <h3 class="text-lg font-semibold line-clamp-1">Real Madrid vs Barcelona</h3>
-                            </div>
-                            <span class="text-sm text-gray-400">35'</span>
-                        </div>
-                        <p class="text-sm text-gray-400 mb-4">La Liga Santander</p>
-                        <div class="flex justify-between items-center mb-3">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 1" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Real Madrid</span>
-                            </div>
-                            <span class="text-lg font-bold">0</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 2" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Barcelona</span>
-                            </div>
-                            <span class="text-lg font-bold">1</span>
-                        </div>
-                        <button class="w-full mt-4 bg-primary hover:bg-blue-700 text-white font-medium py-2 rounded-full transition duration-300">
-                            Watch Now
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Match Card 3 -->
-                <div class="bg-dark rounded-xl overflow-hidden shadow-neumorphic hover:shadow-xl transition duration-500 match-card relative">
-                    <div class="channel-badge">NBC Sports</div>
-                    <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Match" class="w-full h-40 object-cover">
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white mb-1">
-                                    <span class="live-indicator mr-1">●</span> LIVE
-                                </span>
-                                <h3 class="text-lg font-semibold line-clamp-1">LA Lakers vs Golden State Warriors</h3>
-                            </div>
-                            <span class="text-sm text-gray-400">Q3</span>
-                        </div>
-                        <p class="text-sm text-gray-400 mb-4">NBA Regular Season</p>
-                        <div class="flex justify-between items-center mb-3">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 1" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Lakers</span>
-                            </div>
-                            <span class="text-lg font-bold">78</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 2" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Warriors</span>
-                            </div>
-                            <span class="text-lg font-bold">82</span>
-                        </div>
-                        <button class="w-full mt-4 bg-primary hover:bg-blue-700 text-white font-medium py-2 rounded-full transition duration-300">
-                            Watch Now
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Match Card 4 -->
-                <div class="bg-dark rounded-xl overflow-hidden shadow-neumorphic hover:shadow-xl transition duration-500 match-card relative">
-                    <div class="channel-badge">TNT Sports</div>
-                    <img src="https://images.unsplash.com/photo-1531415074968-036ba1b575da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80" alt="Match" class="w-full h-40 object-cover">
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white mb-1">
-                                    <span class="live-indicator mr-1">●</span> LIVE
-                                </span>
-                                <h3 class="text-lg font-semibold line-clamp-1">PSG vs Bayern Munich</h3>
-                            </div>
-                            <span class="text-sm text-gray-400">25'</span>
-                        </div>
-                        <p class="text-sm text-gray-400 mb-4">UEFA Champions League</p>
-                        <div class="flex justify-between items-center mb-3">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 1" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Paris SG</span>
-                            </div>
-                            <span class="text-lg font-bold">0</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team 2" class="w-6 h-6 mr-2">
-                                <span class="text-sm font-medium">Bayern</span>
-                            </div>
-                            <span class="text-lg font-bold">0</span>
-                        </div>
-                        <button class="w-full mt-4 bg-primary hover:bg-blue-700 text-white font-medium py-2 rounded-full transition duration-300">
-                            Watch Now
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Upcoming Matches Section -->
-        <section class="py-12 bg-darker">
-            <div class="container mx-auto px-4">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-2xl md:text-3xl font-bold">Upcoming <span class="gradient-text">Matches</span></h2>
-                    <a href="#" class="text-primary hover:text-blue-300 font-medium">View All <i class="fas fa-arrow-right ml-1"></i></a>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <!-- Upcoming Match 1 -->
-                    <div class="bg-dark rounded-xl overflow-hidden shadow-neumorphic-sm transition duration-300 p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center">
-                                <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
-                                <span class="text-sm text-gray-400">Tomorrow, 19:45</span>
-                            </div>
-                            <span class="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">UCL</span>
-                        </div>
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team" class="w-8 h-8 mr-3">
-                                <span class="font-medium">Chelsea FC</span>
-                            </div>
-                            <span class="text-gray-400">vs</span>
-                            <div class="flex items-center">
-                                <span class="font-medium mr-3">AC Milan</span>
-                                <img src="https://via.placeholder.com/24" alt="Team" class="w-8 h-8">
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-400">Stamford Bridge</span>
-                            <button class="text-primary hover:text-blue-300 font-medium text-sm">
-                                Set Reminder <i class="fas fa-bell ml-1"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Upcoming Match 2 -->
-                    <div class="bg-dark rounded-xl overflow-hidden shadow-neumorphic-sm transition duration-300 p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center">
-                                <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
-                                <span class="text-sm text-gray-400">Sat, 12:30</span>
-                            </div>
-                            <span class="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">EPL</span>
-                        </div>
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team" class="w-8 h-8 mr-3">
-                                <span class="font-medium">Arsenal</span>
-                            </div>
-                            <span class="text-gray-400">vs</span>
-                            <div class="flex items-center">
-                                <span class="font-medium mr-3">Manchester City</span>
-                                <img src="https://via.placeholder.com/24" alt="Team" class="w-8 h-8">
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-400">Emirates Stadium</span>
-                            <button class="text-primary hover:text-blue-300 font-medium text-sm">
-                                Set Reminder <i class="fas fa-bell ml-1"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Upcoming Match 3 -->
-                    <div class="bg-dark rounded-xl overflow-hidden shadow-neumorphic-sm transition duration-300 p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center">
-                                <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
-                                <span class="text-sm text-gray-400">Sun, 16:30</span>
-                            </div>
-                            <span class="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">NFL</span>
-                        </div>
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center">
-                                <img src="https://via.placeholder.com/24" alt="Team" class="w-8 h-8 mr-3">
-                                <span class="font-medium">Kansas City</span>
-                            </div>
-                            <span class="text-gray-400">vs</span>
-                            <div class="flex items-center">
-                                <span class="font-medium mr-3">Philadelphia</span>
-                                <img src="https://via.placeholder.com/24" alt="Team" class="w-8 h-8">
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-400">Arrowhead Stadium</span>
-                            <button class="text-primary hover:text-blue-300 font-medium text-sm">
-                                Set Reminder <i class="fas fa-bell ml-1"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Channels Section -->
-        <section class="py-12 container mx-auto px-4">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl md:text-3xl font-bold">Popular <span class="gradient-text">Channels</span></h2>
-                <a href="#" class="text-primary hover:text-blue-300 font-medium">View All <i class="fas fa-arrow-right ml-1"></i></a>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                <!-- Channel 1 -->
-                <div class="bg-dark rounded-xl p-5 flex flex-col items-center shadow-neumorphic-sm hover:shadow-lg transition duration-300">
-                    <img src="https://via.placeholder.com/80" alt="ESPN" class="w-16 h-16 object-cover rounded-full mb-3">
-                    <h3 class="font-medium text-center">ESPN</h3>
-                    <span class="text-xs text-gray-400 mt-1">Sports</span>
-                    <button class="mt-3 text-xs bg-primary hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-full transition duration-300">
-                        Watch
-                    </button>
-                </div>
-
-                <!-- Channel 2 -->
-                <div class="bg-dark rounded-xl p-5 flex flex-col items-center shadow-neumorphic-sm hover:shadow-lg transition duration-300">
-                    <img src="https://via.placeholder.com/80" alt="FOX Sports" class="w-16 h-16 object-cover rounded-full mb-3">
-                    <h3 class="font-medium text-center">FOX Sports</h3>
-                    <span class="text-xs text-gray-400 mt-1">Sports</span>
-                    <button class="mt-3 text-xs bg-primary hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-full transition duration-300">
-                        Watch
-                    </button>
-                </div>
-
-                <!-- Channel 3 -->
-                <div class="bg-dark rounded-xl p-5 flex flex-col items-center shadow-neumorphic-sm hover:shadow-lg transition duration-300">
-                    <img src="https://via.placeholder.com/80" alt="Sky Sports" class="w-16 h-16 object-cover rounded-full mb-3">
-                    <h3 class="font-medium text-center">Sky Sports</h3>
-                    <span class="text-xs text-gray-400 mt-1">Sports</span>
-                    <button class="mt-3 text-xs bg-primary hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-full transition duration-300">
-                        Watch
-                    </button>
-                </div>
-
-                <!-- Channel 4 -->
-                <div class="bg-dark rounded-xl p-5 flex flex-col items-center shadow-neumorphic-sm hover:shadow-lg transition duration-300">
-                    <img src="https://via.placeholder.com/80" alt="Bein Sports" class="w-16 h-16 object-cover rounded-full mb-3">
-                    <h3 class="font-medium text-center">Bein Sports</h3>
-                    <span class="text-xs text-gray-400 mt-1">Sports</span>
-                    <button class="mt-3 text-xs bg-primary hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-full transition duration-300">
-                        Watch
-                    </button>
-                </div>
-
-                <!-- Channel 5 -->
-                <div class="bg-dark rounded-xl p-5 flex flex-col items-center shadow-neumorphic-sm hover:shadow-lg transition duration-300">
-                    <img src="https://via.placeholder.com/80" alt="TNT Sports" class="w-16 h-16 object-cover rounded-full mb-3">
-                    <h3 class="font-medium text-center">TNT Sports</h3>
-                    <span class="text-xs text-gray-400 mt-1">Sports</span>
-                    <button class="mt-3 text-xs bg-primary hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-full transition duration-300">
-                        Watch
-                    </button>
-                </div>
-
-                <!-- Channel 6 -->
-                <div class="bg-dark rounded-xl p-5 flex flex-col items-center shadow-neumorphic-sm hover:shadow-lg transition duration-300">
-                    <img src="https://via.placeholder.com/80" alt="Discovery" class="w-16 h-16 object-cover rounded-full mb-3">
-                    <h3 class="font-medium text-center">Discovery</h3>
-                    <span class="text-xs text-gray-400 mt-1">Documentary</span>
-                    <button class="mt-3 text-xs bg-primary hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-full transition duration-300">
-                        Watch
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features Section -->
-        <section class="py-12 bg-gradient-to-b from-darker to-dark">
-            <div class="container mx-auto px-4">
-                <div class="text-center mb-12">
-                    <h2 class="text-2xl md:text-4xl font-bold mb-4">Why Choose <span class="gradient-text">PremiumIPTV</span>?</h2>
-                    <p class="text-gray-400 max-w-3xl mx-auto">Experience the best in live streaming with our premium features and content selection.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <!-- Feature 1 -->
-                    <div class="bg-glass p-6 rounded-xl shadow-neumorphic-sm hover:shadow-xl transition duration-500">
-                        <div class="w-12 h-12 bg-blue-900 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-tv text-blue-400 text-xl"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2">Premium Content</h3>
-                        <p class="text-gray-400">Access to thousands of live TV channels from around the world in HD quality.</p>
-                    </div>
-
-                    <!-- Feature 2 -->
-                    <div class="bg-glass p-6 rounded-xl shadow-neumorphic-sm hover:shadow-xl transition duration-500">
-                        <div class="w-12 h-12 bg-purple-900 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-futbol text-purple-400 text-xl"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2">All Major Sports</h3>
-                        <p class="text-gray-400">Never miss a game with coverage of all major sports leagues and events.</p>
-                    </div>
-
-                    <!-- Feature 3 -->
-                    <div class="bg-glass p-6 rounded-xl shadow-neumorphic-sm hover:shadow-xl transition duration-500">
-                        <div class="w-12 h-12 bg-red-900 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-mobile-alt text-red-400 text-xl"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2">Multi-Device Support</h3>
-                        <p class="text-gray-400">Stream on any device - Smart TV, Phone, Tablet, PC or streaming box.</p>
-                    </div>
-
-                    <!-- Feature 4 -->
-                    <div class="bg-glass p-6 rounded-xl shadow-neumorphic-sm hover:shadow-xl transition duration-500">
-                        <div class="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-redo text-green-400 text-xl"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2">Catch Up TV</h3>
-                        <p class="text-gray-400">Missed your favorite show? Watch it later with our catch-up feature.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-darker border-t border-gray-800 pt-12 pb-8">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <div class="flex items-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-primary">
-                            <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path>
-                            <line x1="2" y1="20" x2="2" y2="20"></line>
-                        </svg>
-                        <span class="ml-2 text-xl font-bold gradient-text">Premium<span class="font-light">IPTV</span></span>
-                    </div>
-                    <p class="text-gray-400 mb-4">The best premium IPTV service provider with thousands of channels from around the world.</p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-primary transition duration-300"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-primary transition duration-300"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-primary transition duration-300"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-primary transition duration-300"><i class="fab fa-telegram"></i></a>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">Home</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">Sports</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">Movies</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">News</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">Premium Channels</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Legal</h3>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">Terms of Service</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">Privacy Policy</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">Refund Policy</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">DMCA</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-primary transition duration-300">24/7 Support</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Subscribe</h3>
-                    <p class="text-gray-400 mb-4">Get the latest updates and offers directly to your inbox.</p>
-                    <div class="flex">
-                        <input type="email" placeholder="Your Email" class="bg-dark border border-gray-700 text-white py-2 px-4 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full">
-                        <button class="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-r-lg transition duration-300">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-800 pt-8">
-                <p class="text-center text-gray-400">&copy; 2023 PremiumIPTV. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-
-        // Theme toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        let darkMode = true;
-
-        themeToggle.addEventListener('click', () => {
-            darkMode = !darkMode;
-            if (darkMode) {
-                document.documentElement.classList.add('dark');
-                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                // You would need to change all the colors to dark mode variants here
-            } else {
-                document.documentElement.classList.remove('dark');
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                // You would need to change all the colors to light mode variants here
-            }
-        });
-
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-
-        // Add active class to current navigation link
-        const navLinks = document.querySelectorAll('nav a');
-        navLinks.forEach(link => {
-            if (link.href === window.location.href) {
-                link.classList.add('text-primary');
-                link.classList.add('font-semibold');
-            }
-        });
-
-        // Video player functionality
-        const videoPlayer = document.getElementById('video-player');
-        const closePlayerBtn = document.getElementById('close-player');
-        const playerElement = document.getElementById('player');
-        let hls = null;
-
-        // Sample video sources - replace with your actual HLS streams
-        const channels = {
-            'espn': 'https://example.com/streams/espn.m3u8',
-            'fox-sports': 'https://example.com/streams/fox-sports.m3u8',
-            'sky-sports': 'https://example.com/streams/sky-sports.m3u8',
-            'bein-sports': 'https://example.com/streams/bein-sports.m3u8',
-            'tnt-sports': 'https://example.com/streams/tnt-sports.m3u8',
-            'discovery': 'https://example.com/streams/discovery.m3u8'
-        };
-
-        // Sample live streams - replace with your actual HLS streams
-        const liveStreams = {
-            'manchester-liverpool': 'https://example.com/streams/epl1.m3u8',
-            'madrid-barcelona': 'https://example.com/streams/laliga1.m3u8',
-            'lakers-warriors': 'https://example.com/streams/nba1.m3u8',
-            'psg-bayern': 'https://example.com/streams/ucl1.m3u8'
-        };
-
-        // Handle watch now buttons
-        document.querySelectorAll('[onclick^="watch"]').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const streamId = this.dataset.streamId || this.parentElement.dataset.streamId;
-                playStream(streamId);
-            });
-        });
-
-        // Close player
-        closePlayerBtn.addEventListener('click', () => {
-            if (hls) {
-                hls.destroy();
-            }
-            playerElement.pause();
-            videoPlayer.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        });
-
-        // Play stream function
-        function playStream(streamId) {
-            videoPlayer.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-
-            if (Hls.isSupported()) {
-                hls = new Hls();
-                hls.loadSource(streams[streamId]);
-                hls.attachMedia(playerElement);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    playerElement.play();
-                });
-            } else if (playerElement.canPlayType('application/vnd.apple.mpegurl')) {
-                playerElement.src = streams[streamId];
-                playerElement.addEventListener('loadedmetadata', function() {
-                    playerElement.play();
-                });
-            }
+    if (Hls.isSupported()) {
+      hls = new Hls({
+        // Configuraciones para reintentos
+        maxRetry: 6,           // Máximo 6 reintentos
+        retryDelay: 2000,      // 2 segundos entre intentos
+        xhrSetup: function(xhr, url) {
+          xhr.timeout = 10000; // Timeout 5 segundos para cada request
         }
+      });
 
-        // Demo functionality - replace with your actual binding
-        document.querySelectorAll('.bg-primary').forEach(btn => {
-            if (btn.textContent.trim().toLowerCase().includes('watch now')) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const card = this.closest('.match-card') || this.closest('.bg-dark');
-                    if (card) {
-                        const channel = card.querySelector('.channel-badge')?.textContent.trim().toLowerCase();
-                        const streamKey = card.querySelector('h3')?.textContent.trim().toLowerCase().replace(/\s+/g, '-');
-                        
-                        const streamId = channel ? channel.replace(' ', '-') : streamKey;
-                        const streamUrl = channel ? channels[channel] : liveStreams[streamKey];
-                        
-                        if (streamUrl) {
-                            playStream(streamUrl);
-                        } else {
-                            // Fallback demo stream
-                            playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
-                        }
-                    }
-                });
-            }
-        });
-    </script>
+      hls.loadSource(streamUrl);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        video.play();
+      });
+
+      // Evento para errores (detallado)
+      hls.on(Hls.Events.ERROR, function(event, data) {
+        console.error('HLS.js error:', data);
+
+        if (data.fatal) {
+          switch(data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.log('Error de red fatal, intentando reiniciar la carga...');
+              hls.startLoad();  // reintentar cargar
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.log('Error de media fatal, intentando recuperación...');
+              hls.recoverMediaError(); // intentar recuperación media
+              break;
+            default:
+              console.log('Error fatal desconocido, destruyendo instancia...');
+              hls.destroy();
+              break;
+          }
+        }
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = streamUrl;
+      video.addEventListener('loadedmetadata', function () {
+        video.play();
+      });
+    }
+
+    container.classList.remove('hidden');
+  }
+
+  function closePlayer() {
+    const container = document.getElementById('playerContainer');
+    const video = document.getElementById('videoPlayer');
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
+    video.pause();
+    video.src = '';
+    container.classList.add('hidden');
+  }
+</script>
+
 </body>
 </html>
